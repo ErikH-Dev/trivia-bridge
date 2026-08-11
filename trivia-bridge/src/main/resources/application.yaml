@@ -1,0 +1,6 @@
+quarkus:
+  rest-client:
+    open-trivia-api:
+      url: https://opentdb.com
+      connect-timeout: 5000
+      read-timeout: 10000
