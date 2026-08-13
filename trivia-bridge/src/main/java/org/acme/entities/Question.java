@@ -14,4 +14,12 @@ public record Question(
     String question,
     List<Answer> incorrectAnswers,
     Answer correctAnswer
-) {}
+) {
+    public boolean containsAnswer(UUID answerId) {
+        return correctAnswer.id().equals(answerId) || incorrectAnswers.stream().anyMatch(a -> a.id().equals(answerId));
+    }
+
+    public boolean isCorrect(UUID answerId) {
+        return correctAnswer.id().equals(answerId);
+    }
+}
