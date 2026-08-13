@@ -7,6 +7,5 @@ public record QuestionCheckResponseDTO(
     UUID selectedAnswerId,
     UUID correctAnswerId,
     boolean correct
-) {
-    
+) {    
 }

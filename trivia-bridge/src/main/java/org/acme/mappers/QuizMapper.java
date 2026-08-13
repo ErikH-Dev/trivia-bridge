@@ -1,6 +1,5 @@
 package org.acme.mappers;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,23 +27,17 @@ public class QuizMapper {
         this.validator = validator;
     }
 
-    public Quiz toEntity(OpenTriviaQuizDTO quizResponseDTO) {
+    public List<Question> toQuestions(OpenTriviaQuizDTO quizResponseDTO) {
         if (quizResponseDTO == null || !validator.validate(quizResponseDTO).isEmpty()) {
             throw new QuestionProviderException("OpenTrivia returned invalid question data");
         }
 
-        UUID quizId = UUID.randomUUID();
-        Instant expiresAt = Instant.now().plusSeconds(3600);
-        return new Quiz(
-            quizId,
-            quizResponseDTO.results().stream()
-                .map(this::toEntity)
-                .toList(),
-            expiresAt
-        );
+        return quizResponseDTO.results().stream()
+                .map(this::toQuestion)
+                .toList();
     }
 
-    private Question toEntity(OpenTriviaQuestionDTO openTriviaQuestionDTO) {
+    private Question toQuestion(OpenTriviaQuestionDTO openTriviaQuestionDTO) {
         UUID questionId = UUID.randomUUID();
         return new Question(
             questionId,
@@ -53,13 +46,13 @@ public class QuizMapper {
             openTriviaQuestionDTO.category(),
             openTriviaQuestionDTO.question(),
             openTriviaQuestionDTO.incorrectAnswers().stream()
-                .map(this::toEntity)
+                .map(this::toAnswer)
                 .toList(),
-            toEntity(openTriviaQuestionDTO.correctAnswer())
+            toAnswer(openTriviaQuestionDTO.correctAnswer())
         );
     }
 
-    private Answer toEntity(String option) {
+    private Answer toAnswer(String option) {
         UUID answerId = UUID.randomUUID();
         return new Answer(answerId, option);
     }

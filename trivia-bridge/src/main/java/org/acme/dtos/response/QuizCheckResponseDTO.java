@@ -8,6 +8,5 @@ public record QuizCheckResponseDTO(
     int correctAnswerCount,
     int totalQuestions,
     List<QuestionCheckResponseDTO> questionResults
-) {
-    
+) {    
 }

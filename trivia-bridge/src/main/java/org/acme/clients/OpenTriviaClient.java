@@ -1,11 +1,12 @@
 package org.acme.clients;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
 import org.acme.dtos.QuestionsRequestDTO;
 import org.acme.dtos.opentrivia.OpenTriviaQuizDTO;
-import org.acme.entities.Quiz;
+import org.acme.entities.Question;
 import org.acme.enums.QuestionDifficulty;
 import org.acme.enums.QuestionType;
 import org.acme.exceptions.NoQuestionsAvailableException;
@@ -28,12 +29,16 @@ public class OpenTriviaClient implements IQuestionProvider {
     }
 
     @Override
-    public Quiz get(QuestionsRequestDTO request) {
+    public List<Question> getQuestions(QuestionsRequestDTO request) {
         OpenTriviaQuizDTO response = openTriviaAPI.getQuestions(
                 request.amount(),
                 toCategoryParameter(request.category()),
                 toDifficultyParameter(request.difficulty()),
                 toTypeParameter(request.type()));
+
+        if (response == null) {
+            throw new QuestionProviderException("OpenTrivia returned no response");
+        }
 
         if (response.responseCode() == 1) {
             throw new NoQuestionsAvailableException();
@@ -43,7 +48,7 @@ public class OpenTriviaClient implements IQuestionProvider {
             throw new QuestionProviderException("OpenTrivia returned response code " + response.responseCode());
         }
 
-        return quizMapper.toEntity(response);
+        return quizMapper.toQuestions(response);
     }
 
     private Optional<Integer> toCategoryParameter(int category) {

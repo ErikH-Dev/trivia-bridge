@@ -12,5 +12,5 @@ public record QuizCheckRequestDTO (
     UUID quizId,
 
     @NotEmpty
-    List<@Valid AnswerCheckRequestDTO> answers
+    List<@NotNull @Valid AnswerCheckRequestDTO> answers
 ) {}

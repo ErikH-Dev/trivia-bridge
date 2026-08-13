@@ -37,7 +37,7 @@ public class QuizService {
     public QuizResponseDTO createQuiz(@Valid QuestionsRequestDTO request) {
         Quiz quiz = new Quiz(
                 UUID.randomUUID(),
-                questionProvider.get(request).questions(),
+                questionProvider.getQuestions(request),
                 Instant.now().plusSeconds(3600));
 
         quizRepository.save(quiz);

@@ -7,7 +7,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.when;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,7 +14,6 @@ import org.acme.clients.OpenTriviaClient;
 import org.acme.dtos.QuestionsRequestDTO;
 import org.acme.entities.Answer;
 import org.acme.entities.Question;
-import org.acme.entities.Quiz;
 import org.acme.enums.QuestionDifficulty;
 import org.acme.enums.QuestionType;
 import org.acme.exceptions.NoQuestionsAvailableException;
@@ -36,9 +34,9 @@ class QuestionsControllerTest {
 	@Test
 	void givenValidQuestionRequest_WhenGettingQuestions_ThenReturnsQuizResponse() {
 		QuestionsRequestDTO request = validQuestionsRequestDTOFixture();
-		Quiz quiz = validQuizEntityFixture();
+		List<Question> questions = validQuestionEntitiesFixture();
 
-		when(openTriviaClient.get(request)).thenReturn(quiz);
+		when(openTriviaClient.getQuestions(request)).thenReturn(questions);
 
 		given()
 			.queryParam("amount", 1)
@@ -77,7 +75,7 @@ class QuestionsControllerTest {
 	void givenNoQuestionsAvailable_WhenGettingQuestions_ThenReturnsNotFound() {
 		QuestionsRequestDTO request = validQuestionsRequestDTOFixture();
 
-		when(openTriviaClient.get(request)).thenThrow(new NoQuestionsAvailableException());
+		when(openTriviaClient.getQuestions(request)).thenThrow(new NoQuestionsAvailableException());
 
 		given()
 			.queryParam("amount", 1)
@@ -96,7 +94,7 @@ class QuestionsControllerTest {
 	void givenQuestionProviderFailure_WhenGettingQuestions_ThenReturnsBadGateway() {
 		QuestionsRequestDTO request = validQuestionsRequestDTOFixture();
 
-		when(openTriviaClient.get(request)).thenThrow(new QuestionProviderException());
+		when(openTriviaClient.getQuestions(request)).thenThrow(new QuestionProviderException());
 
 		given()
 			.queryParam("amount", 1)
@@ -119,10 +117,8 @@ class QuestionsControllerTest {
 				QuestionType.MULTIPLE);
 	}
 
-	private Quiz validQuizEntityFixture() {
-		return new Quiz(
-				UUID.randomUUID(),
-				List.of(new Question(
+	private List<Question> validQuestionEntitiesFixture() {
+		return List.of(new Question(
 						UUID.randomUUID(),
 						QuestionType.MULTIPLE,
 						QuestionDifficulty.EASY,
@@ -137,7 +133,6 @@ class QuestionsControllerTest {
 										"Wrong 2")),
 								new Answer(
 										UUID.randomUUID(),
-										"Correct"))),
-				Instant.now().plusSeconds(3600));
+										"Correct")));
 	}
 }

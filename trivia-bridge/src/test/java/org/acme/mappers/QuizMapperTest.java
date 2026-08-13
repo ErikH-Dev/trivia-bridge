@@ -33,14 +33,14 @@ class QuizMapperTest {
 	void givenInvalidOpenTriviaQuizDTO_WhenMapping_ThenThrowsQuestionProviderException() {
 		OpenTriviaQuizDTO quizDTO = invalidOpenTriviaQuizDTOFixture();
 
-		assertThrows(QuestionProviderException.class, () -> mapper.toEntity(quizDTO));
+		assertThrows(QuestionProviderException.class, () -> mapper.toQuestions(quizDTO));
 	}
 
 	@Test
 	void givenOpenTriviaQuizDTOWithNoQuestions_WhenMapping_ThenThrowsQuestionProviderException() {
 		OpenTriviaQuizDTO quizDTO = new OpenTriviaQuizDTO(1, List.of());
 
-		assertThrows(QuestionProviderException.class, () -> mapper.toEntity(quizDTO));
+		assertThrows(QuestionProviderException.class, () -> mapper.toQuestions(quizDTO));
 	}
 
 	@Test
@@ -63,14 +63,14 @@ class QuizMapperTest {
 	}
 
 	@Test
-	void givenValidOpenTriviaQuizDTO_WhenMapping_ThenReturnsValidQuizEntity() {
+	void givenValidOpenTriviaQuizDTO_WhenMapping_ThenReturnsValidQuestionEntities() {
 		OpenTriviaQuizDTO quizDTO = validOpenTriviaQuizDTOFixture();
 
-		Quiz quiz = mapper.toEntity(quizDTO);
+		List<Question> questions = mapper.toQuestions(quizDTO);
 
-		assertNotNull(quiz);
-		assertEquals(1, quiz.questions().size());
-		Question questionEntity = quiz.questions().get(0);
+		assertNotNull(questions);
+		assertEquals(1, questions.size());
+		Question questionEntity = questions.get(0);
 		assertEquals(QuestionType.MULTIPLE, questionEntity.type());
 		assertEquals(QuestionDifficulty.MEDIUM, questionEntity.difficulty());
 		assertEquals("Science & Nature", questionEntity.category());

@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,7 +15,6 @@ import org.acme.dtos.opentrivia.OpenTriviaQuestionDTO;
 import org.acme.dtos.opentrivia.OpenTriviaQuizDTO;
 import org.acme.entities.Answer;
 import org.acme.entities.Question;
-import org.acme.entities.Quiz;
 import org.acme.enums.QuestionDifficulty;
 import org.acme.enums.QuestionType;
 import org.acme.exceptions.NoQuestionsAvailableException;
@@ -44,33 +42,33 @@ class OpenTriviaClientTest {
 	void givenQuestionRequest_WhenGettingQuestions_ThenOmitsOptionalParameters() {
 		QuestionsRequestDTO request = anyQuestionsRequestDTOFixture();
 		OpenTriviaQuizDTO response = validOpenTriviaQuizDTOFixture();
-		Quiz expectedQuiz = validQuizEntityFixture();
+		List<Question> expectedQuestions = validQuestionEntitiesFixture();
 
 		when(openTriviaAPI.getQuestions(10, Optional.empty(), Optional.empty(), Optional.empty())).thenReturn(response);
-		when(quizMapper.toEntity(response)).thenReturn(expectedQuiz);
+		when(quizMapper.toQuestions(response)).thenReturn(expectedQuestions);
 
-		Quiz quiz = client.get(request);
+		List<Question> questions = client.getQuestions(request);
 
-		assertEquals(expectedQuiz, quiz);
+		assertEquals(expectedQuestions, questions);
 		verify(openTriviaAPI).getQuestions(10, Optional.empty(), Optional.empty(), Optional.empty());
-		verify(quizMapper).toEntity(response);
+		verify(quizMapper).toQuestions(response);
 	}
 
 	@Test
 	void givenQuestionRequest_WhenGettingQuestions_ThenConvertsParameters() {
 		QuestionsRequestDTO request = specificQuestionsRequestDTOFixture();
 		OpenTriviaQuizDTO response = validOpenTriviaQuizDTOFixture();
-		Quiz expectedQuiz = validQuizEntityFixture();
+		List<Question> expectedQuestions = validQuestionEntitiesFixture();
 
 		when(openTriviaAPI.getQuestions(10, Optional.of(17), Optional.of("medium"), Optional.of("multiple")))
 				.thenReturn(response);
-		when(quizMapper.toEntity(response)).thenReturn(expectedQuiz);
+		when(quizMapper.toQuestions(response)).thenReturn(expectedQuestions);
 
-		Quiz quiz = client.get(request);
+		List<Question> questions = client.getQuestions(request);
 
-		assertEquals(expectedQuiz, quiz);
+		assertEquals(expectedQuestions, questions);
 		verify(openTriviaAPI).getQuestions(10, Optional.of(17), Optional.of("medium"), Optional.of("multiple"));
-		verify(quizMapper).toEntity(response);
+		verify(quizMapper).toQuestions(response);
 	}
 
 	@Test
@@ -82,7 +80,7 @@ class OpenTriviaClientTest {
 				10, Optional.of(17), Optional.of("medium"), Optional.of("multiple")))
 				.thenReturn(response);
 
-		assertThrows(NoQuestionsAvailableException.class, () -> client.get(request));
+		assertThrows(NoQuestionsAvailableException.class, () -> client.getQuestions(request));
 		verifyNoInteractions(quizMapper);
 	}
 
@@ -94,7 +92,18 @@ class OpenTriviaClientTest {
 		when(openTriviaAPI.getQuestions(10, Optional.of(17), Optional.of("medium"), Optional.of("multiple")))
 				.thenReturn(response);
 
-		assertThrows(QuestionProviderException.class, () -> client.get(request));
+		assertThrows(QuestionProviderException.class, () -> client.getQuestions(request));
+		verifyNoInteractions(quizMapper);
+	}
+
+	@Test
+	void givenNoProviderResponse_WhenGettingQuestions_ThenThrowsQuestionProviderException() {
+		QuestionsRequestDTO request = specificQuestionsRequestDTOFixture();
+
+		when(openTriviaAPI.getQuestions(10, Optional.of(17), Optional.of("medium"), Optional.of("multiple")))
+				.thenReturn(null);
+
+		assertThrows(QuestionProviderException.class, () -> client.getQuestions(request));
 		verifyNoInteractions(quizMapper);
 	}
 
@@ -126,10 +135,8 @@ class OpenTriviaClientTest {
 						List.of("Hydrogen", "Oxygen", "Helium"))));
 	}
 
-	private Quiz validQuizEntityFixture() {
-		return new Quiz(
-				UUID.randomUUID(),
-				List.of(new Question(
+	private List<Question> validQuestionEntitiesFixture() {
+		return List.of(new Question(
 						UUID.randomUUID(),
 						QuestionType.MULTIPLE,
 						QuestionDifficulty.MEDIUM,
@@ -139,7 +146,6 @@ class OpenTriviaClientTest {
 								new Answer(UUID.randomUUID(), "Hydrogen"),
 								new Answer(UUID.randomUUID(), "Oxygen"),
 								new Answer(UUID.randomUUID(), "Helium")),
-						new Answer(UUID.randomUUID(), "Water"))),
-				Instant.now().plusSeconds(3600));
+						new Answer(UUID.randomUUID(), "Water")));
 	}
 }
