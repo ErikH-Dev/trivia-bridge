@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static org.apache.commons.text.StringEscapeUtils.unescapeHtml4;
+
 import org.acme.dtos.opentrivia.OpenTriviaQuestionDTO;
 import org.acme.dtos.opentrivia.OpenTriviaQuizDTO;
 import org.acme.dtos.response.QuizAnswerResponseDTO;
@@ -43,8 +45,8 @@ public class QuizMapper {
             questionId,
             openTriviaQuestionDTO.type(),
             openTriviaQuestionDTO.difficulty(),
-            openTriviaQuestionDTO.category(),
-            openTriviaQuestionDTO.question(),
+            unescapeHtml4(openTriviaQuestionDTO.category()),
+            unescapeHtml4(openTriviaQuestionDTO.question()),
             openTriviaQuestionDTO.incorrectAnswers().stream()
                 .map(this::toAnswer)
                 .toList(),
@@ -54,7 +56,7 @@ public class QuizMapper {
 
     private Answer toAnswer(String option) {
         UUID answerId = UUID.randomUUID();
-        return new Answer(answerId, option);
+        return new Answer(answerId, unescapeHtml4(option));
     }
 
     public QuizResponseDTO toDTO(Quiz quiz) {
