@@ -1,4 +1,10 @@
 quarkus:
+  http:
+    cors:
+      enabled: true
+      origins: ${QUARKUS_HTTP_CORS_ORIGINS:http://localhost:5173}
+      methods: GET,POST
+      access-control-allow-credentials: false
   rest-client:
     open-trivia-api:
       url: https://opentdb.com
