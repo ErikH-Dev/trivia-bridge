@@ -5,10 +5,13 @@ import java.util.Locale;
 import java.util.Optional;
 
 import org.acme.dtos.QuestionsRequestDTO;
+import org.acme.dtos.opentrivia.OpenTriviaCategoriesDTO;
 import org.acme.dtos.opentrivia.OpenTriviaQuizDTO;
+import org.acme.dtos.response.CategoryResponseDTO;
 import org.acme.entities.Question;
 import org.acme.enums.QuestionDifficulty;
 import org.acme.enums.QuestionType;
+import org.acme.exceptions.CategoryProviderException;
 import org.acme.exceptions.NoQuestionsAvailableException;
 import org.acme.exceptions.QuestionProviderException;
 import org.acme.interfaces.IQuestionProvider;
@@ -16,10 +19,14 @@ import org.acme.mappers.QuizMapper;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.ProcessingException;
 
 @ApplicationScoped
 public class OpenTriviaClient implements IQuestionProvider {
+
+    private static final String CATEGORY_CACHE_NAME = "categories";
 
     private final OpenTriviaAPI openTriviaAPI;
     private final QuizMapper quizMapper;
@@ -32,11 +39,18 @@ public class OpenTriviaClient implements IQuestionProvider {
 
     @Override
     public List<Question> getQuestions(QuestionsRequestDTO request) {
-        OpenTriviaQuizDTO response = openTriviaAPI.getQuestions(
-                request.amount(),
-                toCategoryParameter(request.category()),
-                toDifficultyParameter(request.difficulty()),
-                toTypeParameter(request.type()));
+        OpenTriviaQuizDTO response;
+
+        try {
+            response = openTriviaAPI.getQuestions(
+                    request.amount(),
+                    toCategoryParameter(request.category()),
+                    toDifficultyParameter(request.difficulty()),
+                    toTypeParameter(request.type()));
+        } catch (ProcessingException exception) {
+            LOG.warnf("Unable to retrieve questions from OpenTrivia: %s", exception.getMessage());
+            throw new QuestionProviderException("Unable to retrieve questions from OpenTrivia", exception);
+        }
 
         if (response == null) {
             LOG.warn("OpenTrivia returned a null response");
@@ -63,6 +77,28 @@ public class OpenTriviaClient implements IQuestionProvider {
         }
 
         return quizMapper.toQuestions(response);
+    }
+
+    @Override
+    @CacheResult(cacheName = CATEGORY_CACHE_NAME)
+    public List<CategoryResponseDTO> getCategories() {
+        OpenTriviaCategoriesDTO response;
+
+        try {
+            response = openTriviaAPI.getCategories();
+        } catch (QuestionProviderException | ProcessingException exception) {
+            LOG.warnf("Unable to retrieve categories from OpenTrivia: %s", exception.getMessage());
+            throw new CategoryProviderException("Unable to retrieve categories from OpenTrivia", exception);
+        }
+
+        if (response == null || response.triviaCategories() == null) {
+            LOG.warn("OpenTrivia returned an invalid categories response");
+            throw new CategoryProviderException("OpenTrivia returned an invalid categories response");
+        }
+
+        return response.triviaCategories().stream()
+                .map(category -> new CategoryResponseDTO(category.id(), category.name()))
+                .toList();
     }
 
     private Optional<Integer> toCategoryParameter(int category) {

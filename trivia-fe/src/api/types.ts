@@ -9,6 +9,15 @@ export interface QuestionsRequest {
     type: QuestionTypeRequest
 }
 
+export interface TriviaCategory {
+    id: number
+    name: string
+}
+
+export interface TriviaCategoriesResponse {
+    trivia_categories: TriviaCategory[]
+}
+
 export type QuestionDifficulty = "easy" | "medium" | "hard"
 
 export type QuestionType = "multiple" | "boolean"

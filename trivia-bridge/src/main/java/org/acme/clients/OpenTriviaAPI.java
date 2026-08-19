@@ -2,6 +2,7 @@ package org.acme.clients;
 
 import java.util.Optional;
 
+import org.acme.dtos.opentrivia.OpenTriviaCategoriesDTO;
 import org.acme.dtos.opentrivia.OpenTriviaQuizDTO;
 import org.acme.exceptions.QuestionProviderException;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
@@ -14,16 +15,21 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-@Path("/api.php")
+@Path("/")
 @RegisterRestClient(configKey = "open-trivia-api")
 @Produces(MediaType.APPLICATION_JSON)
 public interface OpenTriviaAPI {
     @GET
+    @Path("/api.php")
     OpenTriviaQuizDTO getQuestions(
             @QueryParam("amount") int amount,
             @QueryParam("category") Optional<Integer> category,
             @QueryParam("difficulty") Optional<String> difficulty,
             @QueryParam("type") Optional<String> type);
+
+    @GET
+    @Path("/api_category.php")
+    OpenTriviaCategoriesDTO getCategories();
 
     @ClientExceptionMapper
     static RuntimeException mapErrorResponse(Response response) {

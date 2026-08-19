@@ -1,16 +1,17 @@
-import { useActionState } from "react"
+import { useActionState, useEffect, useState } from "react"
 
 import {
+    ANY_CATEGORY,
     QUESTION_DIFFICULTIES,
     QUESTION_TYPES,
-    QUIZ_CATEGORIES,
     QUIZ_DIFFICULTIES,
     QUIZ_QUESTION_TYPES,
 } from "@/types/quiz-types"
 import { parseQuizSettings } from "@/validation/quiz-validation"
 import { getApiErrorMessage } from "../api/client"
+import { getCategories } from "../api/categories"
 import { createQuiz } from "../api/questions"
-import type { QuizResponse } from "../api/types"
+import type { QuizResponse, TriviaCategory } from "../api/types"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card"
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "./ui/combobox"
@@ -25,11 +26,31 @@ interface QuizCreationCardProps {
 
 export default function QuizCreationCard({ onQuizCreated }: Readonly<QuizCreationCardProps>) {
     const [, createQuizAction, isSubmitting] = useActionState(handleCreateQuiz, null)
+    const [categories, setCategories] = useState<TriviaCategory[]>([ANY_CATEGORY])
 
-    async function handleCreateQuiz(
-        _previousState: null,
-        formData: FormData,
-    ): Promise<null> {
+    useEffect(() => {
+        let isActive = true
+
+        void getCategories()
+            .then(({ trivia_categories }) => {
+                if (isActive) {
+                    setCategories([ANY_CATEGORY, ...trivia_categories])
+                }
+            })
+            .catch((error) => {
+                if (isActive) {
+                    toast.error("Could not load categories", {
+                        description: getApiErrorMessage(error),
+                    })
+                }
+            })
+
+        return () => {
+            isActive = false
+        }
+    }, [])
+
+    async function handleCreateQuiz(_previousState: null, formData: FormData): Promise<null> {
         const settings = parseQuizSettings(formData)
 
         if (!settings.success) {
@@ -79,17 +100,20 @@ export default function QuizCreationCard({ onQuizCreated }: Readonly<QuizCreatio
                         <Combobox
                             name="category"
                             required
-                            items={QUIZ_CATEGORIES}
-                            defaultValue={QUIZ_CATEGORIES[0]}
-                            itemToStringLabel={(item) => item.label}
-                            itemToStringValue={(item) => String(item.value)}
+                            items={categories}
+                            defaultValue={ANY_CATEGORY}
+                            itemToStringLabel={(item) => item.name}
+                            itemToStringValue={(item) => String(item.id)}
                         >
-                            <ComboboxInput id="question-category" placeholder="Select a category" />
+                            <ComboboxInput
+                                id="question-category"
+                                placeholder="Select a category"
+                            />
                             <ComboboxContent>
                                 <ComboboxList>
                                     {(item) => (
-                                        <ComboboxItem key={item.value} value={item}>
-                                            {item.label}
+                                        <ComboboxItem key={item.id} value={item}>
+                                            {item.name}
                                         </ComboboxItem>
                                     )}
                                 </ComboboxList>

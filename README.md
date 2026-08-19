@@ -13,6 +13,7 @@ The implementation and technical decisions in this repository are my submission.
 
 - Generate quizzes with 1 to 50 questions
 - Filter by category, difficulty, and question type
+- Load the available categories dynamically from Open Trivia DB
 - Answer multiple-choice and true-or-false questions
 - Validate and score complete quiz submissions on the backend
 - Review selected and correct answers after submission
@@ -105,6 +106,25 @@ Docker Compose and Vite both read these values from the root `.env` file. Vite o
 When running the backend without Docker, Quarkus does not automatically load the root `.env`; provide its variables through your shell or IDE run configuration. All variables have development defaults, so no configuration is required for the standard local ports.
 
 ## API
+
+### Get categories
+
+```http
+GET /categories
+```
+
+The backend returns the available categories:
+
+```json
+{
+  "trivia_categories": [
+    {
+      "id": 9,
+      "name": "General Knowledge"
+    }
+  ]
+}
+```
 
 ### Create a quiz
 

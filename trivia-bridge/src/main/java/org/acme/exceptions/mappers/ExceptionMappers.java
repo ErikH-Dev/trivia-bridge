@@ -1,6 +1,7 @@
 package org.acme.exceptions.mappers;
 
 import org.acme.exceptions.AnswerNotFoundException;
+import org.acme.exceptions.CategoryProviderException;
 import org.acme.exceptions.ErrorResponse;
 import org.acme.exceptions.InvalidQuizSubmissionException;
 import org.acme.exceptions.NoQuestionsAvailableException;
@@ -13,6 +14,17 @@ import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 import jakarta.ws.rs.core.Response;
 
 public class ExceptionMappers {
+
+	@ServerExceptionMapper
+	public RestResponse<ErrorResponse> categoryProviderException(
+			CategoryProviderException exception) {
+
+		return RestResponse.status(
+				Response.Status.BAD_GATEWAY,
+				new ErrorResponse(
+						"CATEGORY_PROVIDER_ERROR",
+						"Unable to retrieve categories"));
+	}
 
 	@ServerExceptionMapper
 	public RestResponse<ErrorResponse> noQuestionsAvailable(

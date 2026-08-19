@@ -16,12 +16,7 @@ export const QUESTION_TYPES = {
 
 export type QuestionTypeRequest = (typeof QUESTION_TYPES)[keyof typeof QUESTION_TYPES]
 
-export const QUIZ_CATEGORIES = [
-    { label: "Any", value: 0 },
-    { label: "General Knowledge", value: 9 },
-    { label: "Entertainment: Video Games", value: 15 },
-    { label: "Science: Computers", value: 18 },
-] as const
+export const ANY_CATEGORY = { id: 0, name: "Any" } as const
 
 export const QUIZ_DIFFICULTIES = [
     { label: "Any", value: QUESTION_DIFFICULTIES.ANY },

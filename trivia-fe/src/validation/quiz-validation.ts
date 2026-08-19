@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 import type { AnswerCheckRequest, QuestionsRequest, QuizResponse } from "@/api/types"
-import { QUESTION_DIFFICULTIES, QUESTION_TYPES, QUIZ_CATEGORIES } from "@/types/quiz-types"
+import { QUESTION_DIFFICULTIES, QUESTION_TYPES } from "@/types/quiz-types"
 
 export type ValidationResult<T> =
     | {
@@ -22,10 +22,7 @@ const quizSettingsSchema: z.ZodType<QuestionsRequest> = z.object({
     category: z.coerce
         .number()
         .int("Category must be a whole number")
-        .refine(
-            (category) => QUIZ_CATEGORIES.some(({ value }) => value === category),
-            "Category is invalid"
-        ),
+        .nonnegative("Category cannot be negative"),
     difficulty: z.enum(QUESTION_DIFFICULTIES),
     type: z.enum(QUESTION_TYPES),
 })

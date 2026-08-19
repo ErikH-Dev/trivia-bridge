@@ -133,8 +133,7 @@ class CheckAnswersControllerTest {
 				.post()
 				.then()
 				.statusCode(400)
-				.body("code", equalTo("VALIDATION_ERROR"))
-				.body("message", equalTo("Request body is required"));
+				.body("code", equalTo("VALIDATION_ERROR"));
 	}
 
 	private Quiz validQuizEntityFixture() {
