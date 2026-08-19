@@ -24,9 +24,12 @@ interface QuizCreationCardProps {
 }
 
 export default function QuizCreationCard({ onQuizCreated }: Readonly<QuizCreationCardProps>) {
-    const [, createQuizAction, isSubmitting] = useActionState(createQuiz, null)
+    const [, createQuizAction, isSubmitting] = useActionState(handleCreateQuiz, null)
 
-    async function createQuiz(_previousState: null, formData: FormData): Promise<null> {
+    async function handleCreateQuiz(
+        _previousState: null,
+        formData: FormData,
+    ): Promise<null> {
         const settings = parseQuizSettings(formData)
 
         if (!settings.success) {
