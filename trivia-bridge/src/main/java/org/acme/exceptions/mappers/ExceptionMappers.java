@@ -2,6 +2,7 @@ package org.acme.exceptions.mappers;
 
 import org.acme.exceptions.AnswerNotFoundException;
 import org.acme.exceptions.ErrorResponse;
+import org.acme.exceptions.InvalidQuizSubmissionException;
 import org.acme.exceptions.NoQuestionsAvailableException;
 import org.acme.exceptions.QuestionNotFoundException;
 import org.acme.exceptions.QuestionProviderException;
@@ -58,11 +59,22 @@ public class ExceptionMappers {
 	}
 
 	@ServerExceptionMapper
-	public RestResponse<ErrorResponse> questionProviderException(QuestionProviderException exception) {
+	public RestResponse<ErrorResponse> questionProviderException(
+		QuestionProviderException exception) {
 		return RestResponse.status(
 				Response.Status.BAD_GATEWAY,
 				new ErrorResponse(
 						"QUESTION_PROVIDER_ERROR",
 						"Unable to retrieve questions"));
+	}
+
+	@ServerExceptionMapper
+	public RestResponse<ErrorResponse> invalidSubmission(
+		InvalidQuizSubmissionException exception) {
+		return RestResponse.status(
+				Response.Status.BAD_REQUEST,
+				new ErrorResponse(
+						"INVALID_QUIZ_SUBMISSION",
+						exception.getMessage()));
 	}
 }

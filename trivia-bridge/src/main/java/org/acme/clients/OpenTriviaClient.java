@@ -14,6 +14,7 @@ import org.acme.exceptions.QuestionProviderException;
 import org.acme.interfaces.IQuestionProvider;
 import org.acme.mappers.QuizMapper;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -22,6 +23,7 @@ public class OpenTriviaClient implements IQuestionProvider {
 
     private final OpenTriviaAPI openTriviaAPI;
     private final QuizMapper quizMapper;
+    private static final Logger LOG = Logger.getLogger(OpenTriviaClient.class);
 
     public OpenTriviaClient(@RestClient OpenTriviaAPI openTriviaAPI, QuizMapper quizMapper) {
         this.openTriviaAPI = openTriviaAPI;
@@ -37,14 +39,26 @@ public class OpenTriviaClient implements IQuestionProvider {
                 toTypeParameter(request.type()));
 
         if (response == null) {
+            LOG.warn("OpenTrivia returned a null response");
             throw new QuestionProviderException("OpenTrivia returned no response");
         }
 
         if (response.responseCode() == 1) {
+            LOG.debugf("OpenTrivia had no questions available: amount=%d, category=%d, difficulty=%s, type=%s",
+                    request.amount(),
+                    request.category(),
+                    request.difficulty(),
+                    request.type());
             throw new NoQuestionsAvailableException();
         }
-        
-        if (response.responseCode() > 1 ) {
+
+        if (response.responseCode() > 1) {
+            LOG.warnf("OpenTrivia returned response code %d: amount=%d, category=%d, difficulty=%s, type=%s",
+                    response.responseCode(),
+                    request.amount(),
+                    request.category(),
+                    request.difficulty(),
+                    request.type());
             throw new QuestionProviderException("OpenTrivia returned response code " + response.responseCode());
         }
 

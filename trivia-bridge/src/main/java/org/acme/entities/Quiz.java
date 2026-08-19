@@ -1,11 +1,14 @@
 package org.acme.entities;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 public record Quiz(
+    @NotNull
     UUID id,
-    List<Question> questions,
-    Instant expiresAt
+    @NotEmpty
+    List<Question> questions
 ) {}

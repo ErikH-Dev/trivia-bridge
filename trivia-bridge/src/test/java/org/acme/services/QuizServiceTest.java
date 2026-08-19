@@ -4,11 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.acme.clients.OpenTriviaClient;
 import org.acme.dtos.AnswerCheckRequestDTO;
 import org.acme.dtos.QuizCheckRequestDTO;
 import org.acme.dtos.response.QuestionCheckResponseDTO;
@@ -19,7 +17,9 @@ import org.acme.entities.Quiz;
 import org.acme.enums.QuestionDifficulty;
 import org.acme.enums.QuestionType;
 import org.acme.exceptions.AnswerNotFoundException;
+import org.acme.exceptions.InvalidQuizSubmissionException;
 import org.acme.exceptions.QuestionNotFoundException;
+import org.acme.interfaces.IQuestionProvider;
 import org.acme.mappers.QuizMapper;
 import org.acme.repositories.QuizRepository;
 import org.junit.jupiter.api.Test;
@@ -38,9 +38,10 @@ class QuizServiceTest {
 	private static final UUID FIRST_WRONG_ANSWER_ID = UUID.fromString("00000000-0000-0000-0000-000000000202");
 	private static final UUID SECOND_CORRECT_ANSWER_ID = UUID.fromString("00000000-0000-0000-0000-000000000203");
 	private static final UUID SECOND_WRONG_ANSWER_ID = UUID.fromString("00000000-0000-0000-0000-000000000204");
+	private static final UUID UNKNOWN_QUESTION_ID = UUID.fromString("00000000-0000-0000-0000-000000000999");
 
 	@Mock
-	OpenTriviaClient openTriviaClient;
+	IQuestionProvider questionProvider;
 
 	@Mock
 	QuizMapper quizMapper;
@@ -86,10 +87,11 @@ class QuizServiceTest {
 	@Test
 	void givenUnknownQuestion_WhenCheckingAnswers_ThenThrowsQuestionNotFoundException() {
 		Quiz quiz = validQuizEntityFixture();
-		UUID unknownQuestionId = UUID.fromString("00000000-0000-0000-0000-000000000999");
 		QuizCheckRequestDTO request = new QuizCheckRequestDTO(
 				QUIZ_ID,
-				List.of(new AnswerCheckRequestDTO(unknownQuestionId, FIRST_CORRECT_ANSWER_ID)));
+				List.of(
+						new AnswerCheckRequestDTO(UNKNOWN_QUESTION_ID, FIRST_CORRECT_ANSWER_ID),
+						new AnswerCheckRequestDTO(SECOND_QUESTION_ID, SECOND_CORRECT_ANSWER_ID)));
 
 		when(quizRepository.findById(QUIZ_ID)).thenReturn(quiz);
 
@@ -101,11 +103,71 @@ class QuizServiceTest {
 		Quiz quiz = validQuizEntityFixture();
 		QuizCheckRequestDTO request = new QuizCheckRequestDTO(
 				QUIZ_ID,
-				List.of(new AnswerCheckRequestDTO(FIRST_QUESTION_ID, SECOND_CORRECT_ANSWER_ID)));
+				List.of(
+						new AnswerCheckRequestDTO(FIRST_QUESTION_ID, SECOND_CORRECT_ANSWER_ID),
+						new AnswerCheckRequestDTO(SECOND_QUESTION_ID, SECOND_CORRECT_ANSWER_ID)));
 
 		when(quizRepository.findById(QUIZ_ID)).thenReturn(quiz);
 
 		assertThrows(AnswerNotFoundException.class, () -> quizService.checkAnswers(request));
+	}
+
+	@Test
+	void givenDuplicateQuestion_WhenCheckingAnswers_ThenThrowsInvalidQuizSubmissionException() {
+		Quiz quiz = validQuizEntityFixture();
+		QuizCheckRequestDTO request = new QuizCheckRequestDTO(
+				QUIZ_ID,
+				List.of(
+						new AnswerCheckRequestDTO(FIRST_QUESTION_ID, FIRST_CORRECT_ANSWER_ID),
+						new AnswerCheckRequestDTO(FIRST_QUESTION_ID, FIRST_WRONG_ANSWER_ID)));
+
+		when(quizRepository.findById(QUIZ_ID)).thenReturn(quiz);
+
+		assertThrows(InvalidQuizSubmissionException.class, () -> quizService.checkAnswers(request));
+	}
+
+	@Test
+	void givenTooFewAnswers_WhenCheckingAnswers_ThenThrowsInvalidQuizSubmissionException() {
+		Quiz quiz = validQuizEntityFixture();
+		QuizCheckRequestDTO request = new QuizCheckRequestDTO(
+				QUIZ_ID,
+				List.of(new AnswerCheckRequestDTO(FIRST_QUESTION_ID, FIRST_CORRECT_ANSWER_ID)));
+
+		when(quizRepository.findById(QUIZ_ID)).thenReturn(quiz);
+
+		assertThrows(InvalidQuizSubmissionException.class, () -> quizService.checkAnswers(request));
+	}
+
+	@Test
+	void givenTooManyAnswers_WhenCheckingAnswers_ThenThrowsInvalidQuizSubmissionException() {
+		Quiz quiz = validQuizEntityFixture();
+		QuizCheckRequestDTO request = new QuizCheckRequestDTO(
+				QUIZ_ID,
+				List.of(
+						new AnswerCheckRequestDTO(FIRST_QUESTION_ID, FIRST_CORRECT_ANSWER_ID),
+						new AnswerCheckRequestDTO(SECOND_QUESTION_ID, SECOND_CORRECT_ANSWER_ID),
+						new AnswerCheckRequestDTO(UNKNOWN_QUESTION_ID, FIRST_WRONG_ANSWER_ID)));
+
+		when(quizRepository.findById(QUIZ_ID)).thenReturn(quiz);
+
+		assertThrows(InvalidQuizSubmissionException.class, () -> quizService.checkAnswers(request));
+	}
+
+	@Test
+	void givenAnswersInReverseOrder_WhenCheckingAnswers_ThenPreservesRequestOrder() {
+		Quiz quiz = validQuizEntityFixture();
+		QuizCheckRequestDTO request = new QuizCheckRequestDTO(
+				QUIZ_ID,
+				List.of(
+						new AnswerCheckRequestDTO(SECOND_QUESTION_ID, SECOND_WRONG_ANSWER_ID),
+						new AnswerCheckRequestDTO(FIRST_QUESTION_ID, FIRST_CORRECT_ANSWER_ID)));
+
+		when(quizRepository.findById(QUIZ_ID)).thenReturn(quiz);
+
+		QuizCheckResponseDTO result = quizService.checkAnswers(request);
+
+		assertEquals(SECOND_QUESTION_ID, result.questionResults().get(0).questionId());
+		assertEquals(FIRST_QUESTION_ID, result.questionResults().get(1).questionId());
 	}
 
 	private Quiz validQuizEntityFixture() {
@@ -127,7 +189,6 @@ class QuizServiceTest {
 								"Science",
 								"Second question?",
 								List.of(new Answer(SECOND_WRONG_ANSWER_ID, "Wrong")),
-								new Answer(SECOND_CORRECT_ANSWER_ID, "Correct"))),
-				Instant.now().plusSeconds(3600));
+								new Answer(SECOND_CORRECT_ANSWER_ID, "Correct"))));
 	}
 }

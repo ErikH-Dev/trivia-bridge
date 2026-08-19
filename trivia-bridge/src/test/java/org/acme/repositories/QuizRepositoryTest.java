@@ -1,9 +1,11 @@
 package org.acme.repositories;
 
+import static org.acme.repositories.QuizRepository.QUIZ_CACHE_NAME;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.time.Instant;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,15 +15,34 @@ import org.acme.entities.Quiz;
 import org.acme.enums.QuestionDifficulty;
 import org.acme.enums.QuestionType;
 import org.acme.exceptions.QuizNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.quarkus.cache.Cache;
+import io.quarkus.cache.CacheName;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+
+@QuarkusTest
 class QuizRepositoryTest {
 
-	private final QuizRepository quizRepository = new QuizRepository();
+	@Inject
+	QuizRepository quizRepository;
+
+	@Inject
+	@CacheName(QUIZ_CACHE_NAME)
+	Cache quizCache;
+
+	@BeforeEach
+	void clearQuizCache() {
+		quizCache.invalidateAll()
+				.await()
+				.indefinitely();
+	}
 
 	@Test
 	void givenSavedQuiz_WhenFindingById_ThenReturnsQuiz() {
-		Quiz quiz = quizFixture(Instant.now().plusSeconds(3600));
+		Quiz quiz = quizFixture();
 
 		quizRepository.save(quiz);
 
@@ -37,13 +58,22 @@ class QuizRepositoryTest {
 
 	@Test
 	void givenExpiredQuiz_WhenFindingById_ThenThrowsQuizNotFoundException() {
-		Quiz quiz = quizFixture(Instant.now().minusSeconds(1));
+		Quiz quiz = quizFixture();
 		quizRepository.save(quiz);
 
-		assertThrows(QuizNotFoundException.class, () -> quizRepository.findById(quiz.id()));
+		assertEquals(
+				quiz,
+				quizRepository.findById(quiz.id()));
+
+		await()
+				.atMost(Duration.ofSeconds(5))
+				.pollInterval(Duration.ofMillis(50))
+				.untilAsserted(() -> assertThrows(
+						QuizNotFoundException.class,
+						() -> quizRepository.findById(quiz.id())));
 	}
 
-	private Quiz quizFixture(Instant expiresAt) {
+	private Quiz quizFixture() {
 		return new Quiz(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),
 				List.of(new Question(
@@ -57,7 +87,7 @@ class QuizRepositoryTest {
 								"Wrong")),
 						new Answer(
 								UUID.randomUUID(),
-								"Correct"))),
-				expiresAt);
+								"Correct"))));
 	}
+
 }

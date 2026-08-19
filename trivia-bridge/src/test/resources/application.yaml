@@ -1,0 +1,6 @@
+quarkus:
+  cache:
+    caffeine:
+      quizzes:
+        expire-after-write: 2s
+        maximum-size: 100

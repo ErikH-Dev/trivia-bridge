@@ -5,8 +5,16 @@ quarkus:
       origins: ${QUARKUS_HTTP_CORS_ORIGINS:http://localhost:5173}
       methods: GET,POST
       access-control-allow-credentials: false
+
   rest-client:
     open-trivia-api:
       url: https://opentdb.com
       connect-timeout: 5000
       read-timeout: 10000
+
+  cache:
+    caffeine:
+      quizzes:
+        expire-after-write: ${QUIZ_CACHE_TTL:1h}
+        maximum-size: ${QUIZ_CACHE_MAXIMUM_SIZE:10000}
+        initial-capacity: 100

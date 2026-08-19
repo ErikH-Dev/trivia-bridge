@@ -4,7 +4,6 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,9 +44,9 @@ class CheckAnswersControllerTest {
 		given()
 				.contentType(ContentType.JSON)
 				.body(request)
-		.when()
+				.when()
 				.post()
-		.then()
+				.then()
 				.statusCode(200)
 				.body("quizId", equalTo(QUIZ_ID.toString()))
 				.body("correctAnswerCount", equalTo(1))
@@ -66,9 +65,9 @@ class CheckAnswersControllerTest {
 		given()
 				.contentType(ContentType.JSON)
 				.body(request)
-		.when()
+				.when()
 				.post()
-		.then()
+				.then()
 				.statusCode(400);
 	}
 
@@ -82,9 +81,9 @@ class CheckAnswersControllerTest {
 		given()
 				.contentType(ContentType.JSON)
 				.body(request)
-		.when()
+				.when()
 				.post()
-		.then()
+				.then()
 				.statusCode(404)
 				.body("code", equalTo("QUIZ_NOT_FOUND"));
 	}
@@ -100,9 +99,9 @@ class CheckAnswersControllerTest {
 		given()
 				.contentType(ContentType.JSON)
 				.body(request)
-		.when()
+				.when()
 				.post()
-		.then()
+				.then()
 				.statusCode(404)
 				.body("code", equalTo("QUESTION_NOT_FOUND"));
 	}
@@ -118,11 +117,24 @@ class CheckAnswersControllerTest {
 		given()
 				.contentType(ContentType.JSON)
 				.body(request)
-		.when()
+				.when()
 				.post()
-		.then()
+				.then()
 				.statusCode(404)
 				.body("code", equalTo("ANSWER_NOT_FOUND"));
+	}
+
+	@Test
+	void givenNullRequestBody_WhenCheckingAnswers_ThenReturnsValidationError() {
+		given()
+				.contentType(ContentType.JSON)
+				.body("null")
+				.when()
+				.post()
+				.then()
+				.statusCode(400)
+				.body("code", equalTo("VALIDATION_ERROR"))
+				.body("message", equalTo("Request body is required"));
 	}
 
 	private Quiz validQuizEntityFixture() {
@@ -135,7 +147,6 @@ class CheckAnswersControllerTest {
 						"General Knowledge",
 						"What is the answer?",
 						List.of(new Answer(WRONG_ANSWER_ID, "Wrong")),
-						new Answer(CORRECT_ANSWER_ID, "Correct"))),
-				Instant.now().plusSeconds(3600));
+						new Answer(CORRECT_ANSWER_ID, "Correct"))));
 	}
 }

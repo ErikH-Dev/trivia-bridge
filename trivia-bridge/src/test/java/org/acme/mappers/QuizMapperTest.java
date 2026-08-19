@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -47,7 +46,7 @@ class QuizMapperTest {
 	void givenQuizEntity_WhenMapping_ThenReturnsValidQuizResponseDTO() {
 		Quiz quiz = validQuizEntityFixture();
 
-		QuizResponseDTO quizDTO = mapper.toDTO(quiz);
+		QuizResponseDTO quizDTO = mapper.toQuizResponseDTO(quiz);
 
 		assertNotNull(quizDTO);
 		assertEquals(1, quizDTO.questions().size());
@@ -117,6 +116,6 @@ class QuizMapperTest {
 				List.of(new Answer(UUID.randomUUID(), "Hydrogen"),
 						new Answer(UUID.randomUUID(), "Oxygen"),
 						new Answer(UUID.randomUUID(), "Helium")),
-				new Answer(UUID.randomUUID(), "Water"))), Instant.now().plusSeconds(3600));
+				new Answer(UUID.randomUUID(), "Water"))));
 	}
 }

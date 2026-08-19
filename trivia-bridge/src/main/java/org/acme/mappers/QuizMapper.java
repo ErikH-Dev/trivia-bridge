@@ -59,16 +59,16 @@ public class QuizMapper {
         return new Answer(answerId, unescapeHtml4(option));
     }
 
-    public QuizResponseDTO toDTO(Quiz quiz) {
+    public QuizResponseDTO toQuizResponseDTO(Quiz quiz) {
         return new QuizResponseDTO(
             quiz.id(),
             quiz.questions().stream()
-                .map(this::toDTO)
+                .map(this::toQuizQuestionResponseDTO)
                 .toList()
         );
     }
 
-    private QuizQuestionResponseDTO toDTO(Question question) {
+    private QuizQuestionResponseDTO toQuizQuestionResponseDTO(Question question) {
         List<Answer> allAnswers = new ArrayList<>(question.incorrectAnswers());
         allAnswers.add(question.correctAnswer());
         Collections.shuffle(allAnswers);
@@ -80,12 +80,12 @@ public class QuizMapper {
             question.type(),
             question.question(),
             allAnswers.stream()
-                .map(this::toDTO)
+                .map(this::toQuizAnswerResponseDTO)
                 .toList()
         );
     }
 
-    private QuizAnswerResponseDTO toDTO(Answer answer) {
+    private QuizAnswerResponseDTO toQuizAnswerResponseDTO(Answer answer) {
         return new QuizAnswerResponseDTO(
             answer.id(),
             answer.option()
